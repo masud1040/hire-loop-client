@@ -51,14 +51,21 @@ export function Navbar() {
         {/* Desktop Actions (Sign In / Get Started) */}
         <div className="hidden md:flex items-center gap-6">
           <Link 
-            href="/signin" 
+            href="/sign-in" 
             className="text-sm font-semibold text-[#7c72ff] hover:text-[#6558ff] transition-colors"
           >
             Sign In
           </Link>
-          <Button className="bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-full px-6 h-10 transition-colors">
-            Get Started
-          </Button>
+          <Link 
+              href="/sign-up" 
+              className="text-base font-semibold text-[#7c72ff] hover:text-[#6558ff] transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+             <Button className="w-full bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-full h-11 text-base transition-colors">
+              Get Started
+            </Button>
+            </Link>
+       
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -92,15 +99,22 @@ export function Navbar() {
           
           <div className="flex flex-col gap-4 px-2 pb-2">
             <Link 
-              href="/signin" 
+              href="/sign-in" 
               className="text-base font-semibold text-[#7c72ff] hover:text-[#6558ff] transition-colors"
               onClick={() => setIsOpen(false)}
             >
               Sign In
             </Link>
-            <Button className="w-full bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-full h-11 text-base transition-colors">
+            <Link 
+              href="/sign-up" 
+              className="text-base font-semibold text-[#7c72ff] hover:text-[#6558ff] transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+     <Button className="w-full bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-full h-11 text-base transition-colors">
               Get Started
             </Button>
+            </Link> 
+           
           </div>
         </div>
       )}
