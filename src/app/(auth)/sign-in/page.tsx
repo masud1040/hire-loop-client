@@ -34,12 +34,12 @@ const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
         return;
       }
 
-      if (data) {
-        console.log("সাইন ইন সফল!", data);
-        
-        router.push("/");     
-        router.refresh(); 
-      }
+     if (data) {
+      console.log("সাইন ইন সফল!", data);
+      
+      // router.push("/") ebong router.refresh() er bodole nicher line ta use koro:
+      window.location.href = "/"; 
+    }
     } catch (err) {
       console.error("System Error during Sign In:", err);
     }

@@ -37,8 +37,11 @@ export default function SignUpPage() {
       return;
     }
 
-    if (data) {
-      console.log("সাইন আপ করা হয়েছে!", data);
+   if (data) {
+      console.log("Success!", data);
+      
+      router.refresh();
+      
       router.push("/");
     }
   };
