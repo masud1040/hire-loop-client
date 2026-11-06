@@ -5,8 +5,46 @@ import Image from 'next/image';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/app/images/logo.png';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 export default function SignInPage() {
+        const router = useRouter();
+    
+const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.currentTarget);
+    const user = Object.fromEntries(formData.entries()) as {
+      email: string;
+      password: string;
+    };
+
+    console.log("Attempting Sign In with:", user.email);
+
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email: user.email,
+        password: user.password,
+      });
+
+      if (error) {
+        console.error("লগইন এরর:", error.message);
+       
+        return;
+      }
+
+      if (data) {
+        console.log("সাইন ইন সফল!", data);
+        
+        router.push("/");     
+        router.refresh(); 
+      }
+    } catch (err) {
+      console.error("System Error during Sign In:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col justify-center items-center p-4">
       {/* Optional Top Logo */}
@@ -22,12 +60,13 @@ export default function SignInPage() {
           <h2 className="text-3xl font-semibold text-white mb-2 text-center">Welcome back</h2>
           <p className="text-gray-400 text-sm text-center mb-8">Enter your details to sign in to your account</p>
 
-          <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex flex-col gap-4" onSubmit={handleSignin}>
             {/* Email Input */}
             <div className="relative flex items-center">
               <Mail className="w-5 h-5 text-gray-500 absolute left-4" />
               <input 
                 type="email" 
+                name="email"
                 placeholder="Email address" 
                 className="w-full bg-[#121212] border border-white/10 rounded-xl h-12 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-[#6558ff] transition-colors"
                 required
@@ -39,6 +78,7 @@ export default function SignInPage() {
               <Lock className="w-5 h-5 text-gray-500 absolute left-4" />
               <input 
                 type="password" 
+                name="password"
                 placeholder="Password" 
                 className="w-full bg-[#121212] border border-white/10 rounded-xl h-12 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-[#6558ff] transition-colors"
                 required
@@ -52,7 +92,9 @@ export default function SignInPage() {
             </div>
 
             {/* Submit Button */}
-            <Button className="w-full h-12 bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all group">
+            <Button 
+            type="submit"
+             className="w-full h-12 bg-[#6558ff] hover:bg-[#5244e0] text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all group">
               Sign In
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
