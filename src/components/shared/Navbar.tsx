@@ -9,7 +9,7 @@ import { Menu, X, ChevronDown, LayoutDashboard, LogOut, User as UserIcon } from 
 import { Button } from '@/components/ui/button';
 
 import logo from '@/app/images/logo.png';
-import { useSession, authClient,signOut } from '@/lib/auth-client';
+import { useSession, authClient } from '@/lib/auth-client';
 
 const NAV_ITEMS = [
   { label: 'Browse Jobs', href: '/jobs' },
@@ -25,9 +25,11 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  
   const user = session?.user;
+  const role = (user as { role?: string } | undefined)?.role || 'seeker';
+  const dashboardUrl = `/dashboard/${role}`;
 
-  // Click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -38,18 +40,23 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-const handleSignOut = async () => {
-  
+  const hideNavbarRoutes = ['/dashboard', '/admin', '/recruiter', '/seeker'];
+  const shouldHide = hideNavbarRoutes.some((route) => pathname.startsWith(route));
+
+  if (shouldHide) {
+    return null;
+  }
+
+  const handleSignOut = async () => {
     await authClient.signOut();
-    router.refresh(); 
-    window.location.href = '/'; 
+    router.refresh();
+    window.location.href = '/';
   };
 
   return (
     <nav className="fixed top-6 left-4 right-4 md:left-8 md:right-8 lg:left-1/2 lg:-translate-x-1/2 lg:w-full max-w-6xl bg-[#121212]/70 backdrop-blur-xl border border-white/10 rounded-full z-50 shadow-2xl">
       <div className="px-6 md:px-8 h-16 flex items-center justify-between">
         
-        {/* Logo */}
         <Link href="/" className="flex items-center shrink-0 z-50">
           <Image 
             src={logo} 
@@ -61,7 +68,6 @@ const handleSignOut = async () => {
           />
         </Link>
 
-        {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-2">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
@@ -86,16 +92,13 @@ const handleSignOut = async () => {
           })}
         </div>
 
-        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-6">
           {user ? (
-            // Logged In State (Profile Dropdown)
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 hover:bg-white/5 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-white/10"
               >
-                {/* Avatar */}
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#6558ff] to-[#a39eff] flex items-center justify-center text-white font-bold text-sm shadow-inner">
                   {user.name?.charAt(0).toUpperCase() || <UserIcon size={16} />}
                 </div>
@@ -103,7 +106,6 @@ const handleSignOut = async () => {
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown Menu */}
               {isProfileOpen && (
                 <motion.div 
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -113,7 +115,7 @@ const handleSignOut = async () => {
                   className="absolute right-0 mt-3 w-56 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-2 z-50 overflow-hidden"
                 >
                   <Link 
-                    href="/dashboard" 
+                    href={dashboardUrl} 
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
                   >
@@ -132,7 +134,6 @@ const handleSignOut = async () => {
               )}
             </div>
           ) : (
-            // Logged Out State
             <>
               <Link 
                 href="/sign-in" 
@@ -149,7 +150,6 @@ const handleSignOut = async () => {
           )}
         </div>
 
-        {/* Mobile Hamburger Button */}
         <div className="md:hidden flex items-center z-50">
           <button 
             onClick={() => setIsOpen(!isOpen)} 
@@ -160,11 +160,8 @@ const handleSignOut = async () => {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {isOpen && (
         <div className="absolute top-[110%] left-0 w-full bg-[#121212]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col gap-5 shadow-2xl md:hidden">
-          
-          {/* Mobile Profile Section (If Logged In) */}
           {user && (
             <div className="flex items-center gap-4 pb-4 border-b border-white/10">
               <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#6558ff] to-[#a39eff] flex items-center justify-center text-white font-bold text-lg shadow-inner">
@@ -177,7 +174,6 @@ const handleSignOut = async () => {
             </div>
           )}
 
-          {/* Nav Links */}
           <div className="flex flex-col gap-2">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
@@ -198,12 +194,11 @@ const handleSignOut = async () => {
           
           <div className="h-px bg-white/10"></div>
           
-          {/* Mobile Actions */}
           <div className="flex flex-col gap-3">
             {user ? (
               <>
                 <Link 
-                  href="/dashboard"
+                  href={dashboardUrl}
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
                 >
