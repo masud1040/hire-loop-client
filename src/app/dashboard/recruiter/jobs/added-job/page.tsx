@@ -2,16 +2,17 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { 
-  Building2, 
-  MapPin, 
-  Calendar, 
-  Globe, 
+import {
+  Building2,
+  MapPin,
+  Calendar,
+  Globe,
   ArrowRight,
   ChevronRight,
   Briefcase,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
+import { createJob } from "@/lib/actions/jobs";
 
 const JOB_TYPES = [
   { label: "Full-time", value: "full-time" },
@@ -20,12 +21,11 @@ const JOB_TYPES = [
   { label: "Internship", value: "internship" },
 ];
 
-
 export default function AddJobPage() {
   const [selectedJobType, setSelectedJobType] = useState("full-time");
   const [isRemote, setIsRemote] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
@@ -48,36 +48,48 @@ export default function AddJobPage() {
     };
 
     console.log("🚀 Published Job Data:", jobData);
-    // TODO: Add toast notification here
+
+    try {
+   
+      const result = await createJob(jobData); 
+      console.log("Job Created Successfully:", result);
+    
+      
+    } catch (error) {
+      console.error("Error creating job:", error);
+      // TODO: Add error toast notification here
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-white min-h-screen">
-      
       {/* Premium Ambient Background Glow */}
       <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#6558ff] opacity-5 blur-[120px] pointer-events-none rounded-full" />
 
       {/* Header Section */}
       <div className="mb-10 relative z-10">
         <div className="flex items-center gap-2 text-xs font-medium text-gray-400 mb-4 bg-white/[0.03] w-fit px-3 py-1.5 rounded-full border border-white/[0.05]">
-          <Link href="/recruiter/jobs" className="hover:text-gray-200 transition-colors">
+          <Link
+            href="/recruiter/jobs"
+            className="hover:text-gray-200 transition-colors"
+          >
             Manage Jobs
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
           <span className="text-[#867dfa]">Create New Listing</span>
         </div>
-        
+
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-500">
           Post a New Job
         </h1>
         <p className="text-sm md:text-base text-gray-400 max-w-xl">
-          Fill in the position specifications to attract qualified talent across our network. Your listing will go live immediately after publishing.
+          Fill in the position specifications to attract qualified talent across
+          our network. Your listing will go live immediately after publishing.
         </p>
       </div>
 
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
-        
         {/* Section 1: Basic Information */}
         <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/[0.08] rounded-3xl p-6 md:p-8 shadow-2xl">
           <div className="flex items-center gap-3 mb-8">
@@ -133,12 +145,25 @@ export default function AddJobPage() {
                     required
                     className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-3.5 text-gray-200 focus:outline-none focus:border-[#6558ff] focus:ring-4 focus:ring-[#6558ff]/10 transition-all hover:bg-white/[0.04] appearance-none cursor-pointer"
                   >
-                    <option value="Engineering & Tech" className="bg-[#121212]">Engineering & Tech</option>
-                    <option value="Design & Creative" className="bg-[#121212]">Design & Creative</option>
-                    <option value="Product & Operations" className="bg-[#121212]">Product & Operations</option>
-                    <option value="Marketing & Sales" className="bg-[#121212]">Marketing & Sales</option>
+                    <option value="Engineering & Tech" className="bg-[#121212]">
+                      Engineering & Tech
+                    </option>
+                    <option value="Design & Creative" className="bg-[#121212]">
+                      Design & Creative
+                    </option>
+                    <option
+                      value="Product & Operations"
+                      className="bg-[#121212]"
+                    >
+                      Product & Operations
+                    </option>
+                    <option value="Marketing & Sales" className="bg-[#121212]">
+                      Marketing & Sales
+                    </option>
                   </select>
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</span>
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+                    ▼
+                  </span>
                 </div>
               </div>
             </div>
@@ -201,8 +226,8 @@ export default function AddJobPage() {
                 type="button"
                 onClick={() => setIsRemote(!isRemote)}
                 className={`w-12 h-6 rounded-full transition-all duration-300 relative shrink-0 border ${
-                  isRemote 
-                    ? "bg-[#6558ff] border-[#6558ff] shadow-[0_0_15px_rgba(101,88,255,0.4)]" 
+                  isRemote
+                    ? "bg-[#6558ff] border-[#6558ff] shadow-[0_0_15px_rgba(101,88,255,0.4)]"
                     : "bg-white/5 border-white/20"
                 }`}
               >
@@ -256,7 +281,9 @@ export default function AddJobPage() {
                   Min Salary
                 </label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-500 font-medium">€</span>
+                  <span className="absolute left-4 text-gray-500 font-medium">
+                    €
+                  </span>
                   <input
                     type="number"
                     name="minSalary"
@@ -272,7 +299,9 @@ export default function AddJobPage() {
                   Max Salary
                 </label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-500 font-medium">€</span>
+                  <span className="absolute left-4 text-gray-500 font-medium">
+                    €
+                  </span>
                   <input
                     type="number"
                     name="maxSalary"
@@ -293,11 +322,19 @@ export default function AddJobPage() {
                     defaultValue="per hour"
                     className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-3.5 text-gray-200 focus:outline-none focus:border-[#6558ff] focus:ring-4 focus:ring-[#6558ff]/10 transition-all hover:bg-white/[0.04] appearance-none cursor-pointer"
                   >
-                    <option value="per hour" className="bg-[#121212]">per hour</option>
-                    <option value="per month" className="bg-[#121212]">per month</option>
-                    <option value="per year" className="bg-[#121212]">per year</option>
+                    <option value="per hour" className="bg-[#121212]">
+                      per hour
+                    </option>
+                    <option value="per month" className="bg-[#121212]">
+                      per month
+                    </option>
+                    <option value="per year" className="bg-[#121212]">
+                      per year
+                    </option>
                   </select>
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</span>
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+                    ▼
+                  </span>
                 </div>
               </div>
             </div>
@@ -332,7 +369,8 @@ export default function AddJobPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Qualifications & Requirements <span className="text-[#6558ff]">*</span>
+                Qualifications & Requirements{" "}
+                <span className="text-[#6558ff]">*</span>
               </label>
               <textarea
                 name="requirements"
@@ -351,7 +389,7 @@ export default function AddJobPage() {
           <p className="text-sm text-gray-500 mb-6 md:mb-0 text-center md:text-left">
             Double check your information before publishing.
           </p>
-          
+
           <button
             type="submit"
             className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#6558ff] to-[#867dfa] hover:from-[#5244e0] hover:to-[#6558ff] text-white font-semibold text-base transition-all duration-300 shadow-[0_8px_25px_rgba(101,88,255,0.3)] hover:shadow-[0_12px_35px_rgba(101,88,255,0.45)] hover:-translate-y-1"
@@ -360,8 +398,7 @@ export default function AddJobPage() {
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
-
       </form>
     </div>
   );
-}                          
+}

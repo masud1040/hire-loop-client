@@ -49,7 +49,7 @@ const menuItems: Record<Role, MenuItem[]> = {
   ],
   recruiter: [
     { id: '1', name: 'Dashboard', url: '/dashboard/recruiter', icon: LayoutDashboard },
-    { id: '2', name: 'Manage Jobs', url: '/dashboard/recruiter/jobs', icon: Briefcase },
+    { id: '2', name: 'Manage Jobs', url: '/dashboard/recruiter/jobs/manage-jobs', icon: Briefcase },
     { id: '3', name: 'Applications', url: '/dashboard/recruiter/applications', icon: FileText },
     { id: '4', name: 'Settings', url: '/dashboard/recruiter/settings', icon: Settings },
     { id: '5', name: 'Add Job', url: '/dashboard/recruiter/jobs/added-job', icon: Settings },
