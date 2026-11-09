@@ -1,7 +1,6 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
+export const dynamic = "force-dynamic";
 import { 
   ChevronRight, 
   Plus, 
@@ -15,107 +14,30 @@ import {
   PenTool,
   Server,
   Megaphone,
-  CheckCircle2
+  CheckCircle2,
+  Briefcase
 } from "lucide-react";
+import { getJobs } from "@/lib/api/jobs";
+import { DeleteJobDialogue } from "@/app/components/Deletejob";
 
-// ডামি ডেটা (পরবর্তীতে API থেকে আসবে)
-const MOCK_JOBS = [
-  {
-    _id: "1",
-    title: "Frontend Developer",
-    category: "Engineering",
-    company: "HirePulse Network",
-    location: "New York, USA",
-    isRemote: true,
-    jobType: "Full-time",
-    minSalary: 25,
-    maxSalary: 40,
-    frequency: "per hour",
-    applicants: 34,
-    status: "Active",
-    deadline: "05/30/2025",
-    postedAt: "Posted 4d ago",
-    icon: Code2,
-    iconColor: "text-blue-400",
-    iconBg: "bg-blue-500/10",
-  },
-  {
-    _id: "2",
-    title: "Senior Product Designer",
-    category: "Design",
-    company: "HirePulse Labs",
-    location: "London, UK",
-    isRemote: false,
-    jobType: "Full-time",
-    minSalary: 90000,
-    maxSalary: 115000,
-    frequency: "per year",
-    applicants: 19,
-    status: "Active",
-    deadline: "06/14/2025",
-    postedAt: "Posted 1w ago",
-    icon: PenTool,
-    iconColor: "text-orange-400",
-    iconBg: "bg-orange-500/10",
-  },
-  {
-    _id: "3",
-    title: "DevOps Specialist",
-    category: "Infrastructure",
-    company: "HirePulse Platform",
-    location: "Berlin, Germany",
-    isRemote: false,
-    jobType: "Full-time",
-    minSalary: 95000,
-    maxSalary: 120000,
-    frequency: "per year",
-    applicants: 12,
-    status: "Active",
-    deadline: "06/30/2025",
-    postedAt: "Posted 2w ago",
-    icon: Server,
-    iconColor: "text-cyan-400",
-    iconBg: "bg-cyan-500/10",
-  },
-  {
-    _id: "4",
-    title: "Product Marketing Lead",
-    category: "Marketing",
-    company: "HirePulse Network",
-    location: "EU/US",
-    isRemote: true,
-    jobType: "Full-time",
-    minSalary: 80000,
-    maxSalary: 105000,
-    frequency: "per year",
-    applicants: 27,
-    status: "Active",
-    deadline: "07/15/2025",
-    postedAt: "Posted 5d ago",
-    icon: Megaphone,
-    iconColor: "text-purple-400",
-    iconBg: "bg-purple-500/10",
-  },
-  {
-    _id: "5",
-    title: "QA Automation Engineer",
-    category: "Quality",
-    company: "HirePulse Platform",
-    location: "Dublin, Ireland",
-    isRemote: false,
-    jobType: "Part-time",
-    minSalary: 35,
-    maxSalary: 50,
-    frequency: "per hour",
-    applicants: 8,
-    status: "Expired",
-    deadline: "05/01/2025",
-    postedAt: "Closed",
-    icon: CheckCircle2,
-    iconColor: "text-gray-400",
-    iconBg: "bg-gray-500/10",
-  },
-];
+// ক্যাটাগরি অনুযায়ী আইকন ও কালার বের করার হেল্পার ফাংশন
+const getCategoryStyles = (category: string = "") => {
+  const cat = category.toLowerCase();
+  if (cat.includes("engineering") || cat.includes("tech") || cat.includes("infrastructure")) {
+    return { icon: Code2, colorClass: "text-blue-400", bgClass: "bg-blue-500/10", hex: "#60a5fa" };
+  }
+  if (cat.includes("design") || cat.includes("creative")) {
+    return { icon: PenTool, colorClass: "text-orange-400", bgClass: "bg-orange-500/10", hex: "#fb923c" };
+  }
+  if (cat.includes("marketing") || cat.includes("sales")) {
+    return { icon: Megaphone, colorClass: "text-purple-400", bgClass: "bg-purple-500/10", hex: "#c084fc" };
+  }
+  if (cat.includes("product") || cat.includes("operations")) {
+    return { icon: Server, colorClass: "text-cyan-400", bgClass: "bg-cyan-500/10", hex: "#22d3ee" };
+  }
+  // ডিফল্ট স্টাইল
+  return { icon: Briefcase, colorClass: "text-gray-400", bgClass: "bg-gray-500/10", hex: "#9ca3af" };
+};
 
 // স্যালারি ফরম্যাটিং হেল্পার
 const formatSalary = (min: number, max: number, freq: string) => {
@@ -130,11 +52,37 @@ const formatSalary = (min: number, max: number, freq: string) => {
 
 // তারিখ ফরম্যাটিং হেল্পার (05/30/2025 -> May 30, 2025)
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return dateString;
+  }
 };
 
-export default function ManageJobsPage() {
+// কতদিন আগে পোস্ট করা হয়েছে বের করার হেল্পার
+const getPostedAgo = (dateString: string) => {
+  if (!dateString) return "Recently";
+  try {
+    const diffTime = Math.abs(new Date().getTime() - new Date(dateString).getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Posted today";
+    if (diffDays < 7) return `Posted ${diffDays}d ago`;
+    if (diffDays < 30) return `Posted ${Math.floor(diffDays / 7)}w ago`;
+    return `Posted ${Math.floor(diffDays / 30)}mo ago`;
+  } catch {
+    return "";
+  }
+};
+
+export default async function ManageJobsPage() {
+  const jobs = await getJobs(); 
+  
+  // Ensure jobs is an array even if the API fails
+  const safeJobs = Array.isArray(jobs) ? jobs : [];
+
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white min-h-screen">
       
@@ -156,7 +104,7 @@ export default function ManageJobsPage() {
         </div>
 
         <Link 
-          href="/recruiter/jobs/added-job"
+          href="/dashboard/recruiter/jobs/added-job"
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#6558ff] hover:bg-[#5244e0] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(101,88,255,0.3)] hover:shadow-[0_0_25px_rgba(101,88,255,0.4)]"
         >
           <Plus className="w-4 h-4" />
@@ -185,107 +133,119 @@ export default function ManageJobsPage() {
 
             {/* Table Body */}
             <tbody className="divide-y divide-white/[0.05]">
-              {MOCK_JOBS.map((job) => {
-                const Icon = job.icon;
-                return (
-                  <tr key={job._id} className="hover:bg-white/[0.02] transition-colors group">
-                    
-                    {/* Title & Dept */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shrink-0 ${job.iconBg}`}>
-                          <Icon className={`w-5 h-5 ${job.iconColor}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
-                            {job.title}
-                          </p>
-                          <p className="text-[11px] font-medium mt-0.5" style={{ color: job.iconColor.replace('text-', '').replace('-400', '') }}>
-                            {job.category}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
+              {safeJobs.length > 0 ? (
+                safeJobs.map((job: any) => {
+                  const styles = getCategoryStyles(job.category);
+                  const Icon = styles.icon;
 
-                    {/* Company & Location */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-medium text-gray-300">{job.company}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500">
-                        {job.isRemote ? (
-                          <Globe className="w-3.5 h-3.5" />
+                  return (
+                    <tr key={job._id || job.id} className="hover:bg-white/[0.02] transition-colors group">
+                      
+                      {/* Title & Dept */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shrink-0 ${styles.bgClass}`}>
+                            <Icon className={`w-5 h-5 ${styles.colorClass}`} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
+                              {job.title}
+                            </p>
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: styles.hex }}>
+                              {job.category}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Company & Location */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-medium text-gray-300">{job.company}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500">
+                          {job.isRemote ? (
+                            <Globe className="w-3.5 h-3.5" />
+                          ) : (
+                            <MapPin className="w-3.5 h-3.5" />
+                          )}
+                          <span>
+                            {job.isRemote ? `Remote (${job.location})` : `${job.location} (Hybrid)`}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] uppercase font-medium bg-[#1d1e26] text-gray-300 border border-white/[0.05]">
+                          {job.jobType ? job.jobType.replace('-', ' ') : "N/A"}
+                        </span>
+                      </td>
+
+                      {/* Compensation */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-medium text-gray-300">
+                          {formatSalary(job.minSalary || 0, job.maxSalary || 0, job.frequency || "")}
+                        </p>
+                      </td>
+
+                      {/* Applicants */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-[#867dfa]" />
+                          <span className="text-sm font-medium text-[#a39eff]">
+                            {job.applicants || 0} Candidates
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {job.status === "Active" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Active
+                          </span>
                         ) : (
-                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/5 text-gray-400 border border-white/10">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                            {job.status || "Expired"}
+                          </span>
                         )}
-                        <span>
-                          {job.isRemote ? `Remote (${job.location})` : `${job.location} (Hybrid)`}
-                        </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Type */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-[#1d1e26] text-gray-300 border border-white/[0.05]">
-                        {job.jobType}
-                      </span>
-                    </td>
+                      {/* Deadline */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-medium text-gray-300">{formatDate(job.deadline)}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {job.status === "Active" && job.createdAt ? getPostedAgo(job.createdAt) : "Closed"}
+                        </p>
+                      </td>
 
-                    {/* Compensation */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-medium text-gray-300">
-                        {formatSalary(job.minSalary, job.maxSalary, job.frequency)}
-                      </p>
-                    </td>
+                      {/* Actions */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2a2b36] hover:bg-[#323340] text-gray-300 text-xs font-medium border border-white/5 transition-colors">
+                            <Pencil className="w-3.5 h-3.5" />
+                            Update
+                          </button>
+                          <button className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-colors">
+                            <DeleteJobDialogue job={job} className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
 
-                    {/* Applicants */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-[#867dfa]" />
-                        <span className="text-sm font-medium text-[#a39eff]">
-                          {job.applicants} Candidates
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {job.status === "Active" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/5 text-gray-400 border border-white/10">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
-                          Expired
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Deadline */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-medium text-gray-300">{formatDate(job.deadline)}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{job.postedAt}</p>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2a2b36] hover:bg-[#323340] text-gray-300 text-xs font-medium border border-white/5 transition-colors">
-                          <Pencil className="w-3.5 h-3.5" />
-                          Update
-                        </button>
-                        <button className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <button className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-
-                  </tr>
-                );
-              })}
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500 text-sm">
+                    No jobs found. Click &quot;New Job Post&quot; to create one.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
