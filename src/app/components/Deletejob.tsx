@@ -15,14 +15,16 @@ import {
 
 import { useRouter } from "next/navigation";
 import { deleteJob } from "@/lib/actions/jobs"; 
+import type { Job } from "@/type/jobstype";
 
-export function DeleteJobDialogue({ job }: { job: any }) {
+export function DeleteJobDialogue({ job }: { job: Job }) {
   // হুক অবশ্যই কম্পোনেন্টের ভেতরে কল করতে হবে
   const router = useRouter(); 
 
   const handleDelete = async () => {
  
-    const jobId = job._id || job.id; 
+    const jobId = job._id || job.id;
+    if (!jobId) return;
     
     try {
       await deleteJob(jobId);

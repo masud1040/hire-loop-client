@@ -18,6 +18,7 @@ import {
   Briefcase
 } from "lucide-react";
 import { getJobs } from "@/lib/api/jobs";
+import type { Job } from "@/type/jobstype";
 import { DeleteJobDialogue } from "@/app/components/Deletejob";
 
 // ক্যাটাগরি অনুযায়ী আইকন ও কালার বের করার হেল্পার ফাংশন
@@ -81,7 +82,7 @@ export default async function ManageJobsPage() {
   const jobs = await getJobs(); 
   
   // Ensure jobs is an array even if the API fails
-  const safeJobs = Array.isArray(jobs) ? jobs : [];
+  const safeJobs: Job[] = Array.isArray(jobs) ? jobs : [];
 
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white min-h-screen">
@@ -134,7 +135,7 @@ export default async function ManageJobsPage() {
             {/* Table Body */}
             <tbody className="divide-y divide-white/[0.05]">
               {safeJobs.length > 0 ? (
-                safeJobs.map((job: any) => {
+                safeJobs.map((job: Job) => {
                   const styles = getCategoryStyles(job.category);
                   const Icon = styles.icon;
 
@@ -228,7 +229,7 @@ export default async function ManageJobsPage() {
                             Update
                           </button>
                           <button className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-colors">
-                            <DeleteJobDialogue job={job} className="w-4 h-4" />
+                            <DeleteJobDialogue job={job} />
                           </button>
                           <button className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors">
                             <MoreVertical className="w-4 h-4" />

@@ -1,6 +1,8 @@
+import type { Job, JobCreatePayload } from "@/type/jobstype";
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-export const createJob = async (jobData: any) => {
+export const createJob = async (jobData: JobCreatePayload): Promise<Job> => {
   const response = await fetch(`${baseUrl}/jobs`, {
     method: 'POST',
     headers: {
@@ -16,7 +18,7 @@ export const createJob = async (jobData: any) => {
   return response.json(); 
 };
 
-export const deleteJob = async (jobId: string) => {
+export const deleteJob = async (jobId: string): Promise<string> => {
   const response = await fetch(`${baseUrl}/jobs/${jobId}`, {
     method: 'DELETE',
   });

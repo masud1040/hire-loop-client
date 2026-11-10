@@ -13,8 +13,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createJob } from "@/lib/actions/jobs";
+import type { JobCreatePayload, JobStatus, JobType, SalaryFrequency } from "@/type/jobstype";
+import { useRouter } from "next/navigation";
 
-const JOB_TYPES = [
+const JOB_TYPES: { label: string; value: JobType }[] = [
   { label: "Full-time", value: "full-time" },
   { label: "Part-time", value: "part-time" },
   { label: "Contract", value: "contract" },
@@ -22,16 +24,19 @@ const JOB_TYPES = [
 ];
 
 export default function AddJobPage() {
-  const [selectedJobType, setSelectedJobType] = useState("full-time");
+  const [selectedJobType, setSelectedJobType] = useState<JobType>("full-time");
   const [isRemote, setIsRemote] = useState(false);
+  const [jobStatus, setJobStatus] = useState<JobStatus>("Active");
+
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const formValues = Object.fromEntries(formData.entries());
+    const formValues = Object.fromEntries(formData.entries()) as Record<string, string>;
 
-    const jobData = {
+    const jobData: JobCreatePayload = {
       title: formValues.title,
       company: formValues.company,
       category: formValues.category,
@@ -41,20 +46,19 @@ export default function AddJobPage() {
       deadline: formValues.deadline,
       minSalary: Number(formValues.minSalary) || 0,
       maxSalary: Number(formValues.maxSalary) || 0,
-      frequency: formValues.frequency,
+      frequency: formValues.frequency as SalaryFrequency,
       responsibilities: formValues.responsibilities,
       requirements: formValues.requirements,
       createdAt: new Date().toISOString(),
+      status: jobStatus,
     };
 
     console.log("🚀 Published Job Data:", jobData);
 
     try {
-   
       const result = await createJob(jobData); 
       console.log("Job Created Successfully:", result);
-    
-      
+      router.push("/dashboard/recruiter/jobs/manage-jobs");
     } catch (error) {
       console.error("Error creating job:", error);
       // TODO: Add error toast notification here
@@ -192,6 +196,37 @@ export default function AddJobPage() {
                 })}
               </div>
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Job Status <span className="text-[#6558ff]">*</span>
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="Active"
+                    checked={jobStatus === "Active"}
+                    onChange={(e) => setJobStatus(e.target.value as JobStatus)}
+                    className="w-4 h-4 text-[#6558ff] bg-[#121212] border-gray-600 focus:ring-[#6558ff] focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-300">Active</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="Expired"
+                    checked={jobStatus === "Expired"}
+                    onChange={(e) => setJobStatus(e.target.value as JobStatus)}
+                    className="w-4 h-4 text-[#6558ff] bg-[#121212] border-gray-600 focus:ring-[#6558ff] focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-300">Expired</span>
+                </label>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -375,7 +410,7 @@ export default function AddJobPage() {
               <textarea
                 name="requirements"
                 rows={5}
-                defaultValue={`• 3+ years of experience with React, TypeScript, and modern state architectures\n• Solid understanding of DOM performance and component-driven designs\n• Experience partnering closely with product teams and UI/UX designers`}
+                defaultValue={`• 3+ years of experience with React, TypeScript, and modern state architectures\nSolid understanding of DOM performance and component-driven designs\nExperience partnering closely with product teams and UI/UX designers`}
                 placeholder="List skills, certifications, and experience..."
                 required
                 className="w-full bg-white/[0.02] border border-white/10 rounded-2xl p-5 text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-[#6558ff] focus:ring-4 focus:ring-[#6558ff]/10 transition-all hover:bg-white/[0.04] resize-y leading-relaxed font-mono text-sm"
