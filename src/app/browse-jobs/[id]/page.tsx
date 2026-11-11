@@ -9,25 +9,16 @@ import {
   Clock,
   BarChart,
   ShieldCheck,
-  Laptop,
-  Coffee,
-  HeartPulse,
   Globe,
-  Users,
   Building,
   ChevronLeft
 } from "lucide-react";
 import type { Job } from "@/type/jobstype";
 
-// NOTE: আপনার API ফাইলে getJobById ফাংশনটি তৈরি করে নিতে হবে। 
-// আপাতত ডামি ফেচিং ফাংশন ব্যবহার করা হলো।
-import { getJobs } from "@/lib/api/jobs"; 
-async function getJobById(id: string): Promise<Job | null> {
-  const jobs = await getJobs("");
-  return jobs.find((job: Job) => job._id === id || job.id === id) || null;
-}
+import { getJobs, getJobsById } from "@/lib/api/jobs"; 
+import JobApplyButton from "@/app/components/job-applyButton"; // আপনার সঠিক পাথ অনুযায়ী চেক করে নিবেন
 
-// স্যালারি ফরম্যাটিং হেল্পার
+// স্যালারি ফরম্যাটিং হেল্পার (সিনট্যাক্স এরর ফিক্স করা হয়েছে)
 const formatSalary = (min?: number, max?: number, freq: string = "per year") => {
   if (!min && !max) return "Undisclosed";
   if (freq.includes("year") && min && max) return `$${Math.floor(min / 1000)}k - $${Math.floor(max / 1000)}k`;
@@ -51,9 +42,9 @@ const renderBulletPoints = (text?: string) => {
 };
 
 export default async function JobDetailsPage({ params }: { params: { id: string } }) {
-  const { id } = params; // Next.js 15+ হলে await params.id ব্যবহার করবেন
+  const { id } = await params; 
   
-  const job = await getJobById(id);
+  const job = await getJobsById(id);
 
   if (!job) {
     return (
@@ -66,6 +57,15 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
       </div>
     );
   }
+
+  // ডায়নামিক ডেটার জন্য সেফ ভ্যালু (যদি ডাটাবেসে না থাকে, তবে ডিফল্ট দেখাবে)
+  const experience = (job as any).experience || "Not Specified";
+  const jobDescription = (job as any).description || `We are looking for a highly skilled ${job.title} to join our team at ${job.company}. You will work closely with cross-functional teams to deliver high-quality solutions.`;
+  const companySize = (job as any).companySize || "Size not disclosed";
+  const foundedYear = (job as any).foundedYear || "N/A";
+  const website = (job as any).website || "#";
+  const tags = (job as any).tags || [job.category?.split('&')[0], job.jobType?.replace('-', ' ')];
+  const benefits = (job as any).benefits || [];
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-200 pt-24 pb-20 px-4 md:px-8 font-sans selection:bg-[#6558ff]/30">
@@ -84,7 +84,7 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
         <div className="bg-[#101010] border border-white/[0.08] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 md:w-20 md:h-20 bg-[#1a1a1a] border border-white/10 rounded-2xl flex items-center justify-center shrink-0">
-               {/* এখানে চাইলে কোম্পানির লোগো দিতে পারেন */}
+               {/* কোম্পানির লোগো যদি DB তে থাকে, তবে image ট্যাগ ইউজ করবেন */}
                <Briefcase className="w-8 h-8 text-gray-400" />
             </div>
             <div>
@@ -106,9 +106,7 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
             <button className="p-3.5 bg-[#1a1a1a] border border-white/[0.08] hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
               <Bookmark className="w-5 h-5" />
             </button>
-            <button className="flex-1 md:flex-none px-8 py-3.5 bg-white hover:bg-gray-200 text-black font-semibold rounded-xl transition-colors text-sm">
-              Apply Now
-            </button>
+         <JobApplyButton job={job} />
           </div>
         </div>
 
@@ -118,7 +116,7 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
             { icon: Banknote, label: "SALARY RANGE", value: formatSalary(job.minSalary, job.maxSalary, job.frequency) },
             { icon: MapPin, label: "LOCATION", value: job.isRemote ? `Remote (${job.location})` : job.location },
             { icon: Clock, label: "JOB TYPE", value: job.jobType ? job.jobType.replace('-', ' ') : "Full-time" },
-            { icon: BarChart, label: "EXPERIENCE", value: "3 - 5 Years" } // এটি ডামি, আপনার DB তে থাকলে ডায়নামিক করবেন
+            { icon: BarChart, label: "EXPERIENCE", value: experience } // ডায়নামিক ভ্যালু
           ].map((stat, i) => (
             <div key={i} className="bg-[#101010] border border-white/[0.08] rounded-2xl p-5 flex flex-col justify-center">
               <div className="flex items-center gap-2 text-gray-500 mb-2">
@@ -137,13 +135,11 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-[#101010] border border-white/[0.08] rounded-2xl p-6 md:p-8">
               
-              {/* Description */}
+              {/* Job Description (ডায়নামিক) */}
               <section className="mb-10">
                 <h3 className="text-lg font-semibold text-white mb-4">Job Description</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  We are looking for a highly skilled {job.title} to join our team at {job.company}. 
-                  In this role, you will be responsible for defining and building the next generation of our product experiences. 
-                  You will work closely with cross-functional teams including engineering, product management, and marketing to deliver high-quality solutions.
+                <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-line">
+                  {jobDescription}
                 </p>
               </section>
 
@@ -155,42 +151,40 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
                 )}
               </section>
 
-              {/* Requirements */}
+              {/* Requirements & Tags (ডায়নামিক) */}
               <section className="mb-10">
                 <h3 className="text-lg font-semibold text-white mb-4">Requirements</h3>
                 
-                {/* Skills/Tags Mock (Your Figma has these chips) */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {['React.js', 'System Architecture', 'Problem Solving', 'Agile'].map(skill => (
-                    <span key={skill} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                      <span className="text-gray-500">{'</>'}</span>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+                {tags && tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {tags.map((skill: string, idx: number) => (
+                      <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300 flex items-center gap-1.5">
+                        <span className="text-gray-500">{'</>'}</span>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {renderBulletPoints(job.requirements)}
               </section>
 
-              {/* Benefits (Static Mock matching Figma) */}
-              <section>
-                <h3 className="text-lg font-semibold text-white mb-6">Benefits</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { icon: ShieldCheck, text: "Full Health & Dental" },
-                    { icon: HeartPulse, text: "Competitive 401k" },
-                    { icon: Laptop, text: "Latest Hardware Stipend" },
-                    { icon: Coffee, text: "Unlimited PTO" }
-                  ].map((benefit, i) => (
-                    <div key={i} className="flex items-center gap-4 bg-white/[0.02] p-4 rounded-xl border border-white/[0.05]">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                        <benefit.icon className="w-4 h-4 text-gray-400" />
+              {/* Benefits (ডায়নামিক) */}
+              {benefits && benefits.length > 0 && (
+                <section>
+                  <h3 className="text-lg font-semibold text-white mb-6">Benefits</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {benefits.map((benefit: string, i: number) => (
+                      <div key={i} className="flex items-center gap-4 bg-white/[0.02] p-4 rounded-xl border border-white/[0.05]">
+                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                          <ShieldCheck className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <span className="text-sm text-gray-300 font-medium">{benefit}</span>
                       </div>
-                      <span className="text-sm text-gray-300 font-medium">{benefit.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    ))}
+                  </div>
+                </section>
+              )}
 
             </div>
           </div>
@@ -208,25 +202,32 @@ export default async function JobDetailsPage({ params }: { params: { id: string 
                 </div>
               </div>
 
+              {/* Company Info (ডায়নামিক) */}
               <div className="space-y-4 mb-8">
                 <div className="flex items-center justify-between py-3 border-b border-white/[0.05]">
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Size</span>
-                  <span className="text-sm text-gray-300 font-medium">250 - 500 Employees</span>
+                  <span className="text-sm text-gray-300 font-medium">{companySize}</span>
                 </div>
                 <div className="flex items-center justify-between py-3 border-b border-white/[0.05]">
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Industry</span>
-                  <span className="text-sm text-gray-300 font-medium">{job.category.split('&')[0]}</span>
+                  <span className="text-sm text-gray-300 font-medium">{job.category?.split('&')[0] || "General"}</span>
                 </div>
                 <div className="flex items-center justify-between py-3">
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Founded</span>
-                  <span className="text-sm text-gray-300 font-medium">2018</span>
+                  <span className="text-sm text-gray-300 font-medium">{foundedYear}</span>
                 </div>
               </div>
 
-              <button className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-colors text-sm flex items-center justify-center gap-2">
+              {/* Website Link (ডায়নামিক) */}
+              <a 
+                href={website !== "#" ? website : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full py-3.5 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-colors text-sm flex items-center justify-center gap-2 ${website === "#" ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
+              >
                 <Globe className="w-4 h-4" />
                 Visit Website
-              </button>
+              </a>
             </div>
           </div>
 

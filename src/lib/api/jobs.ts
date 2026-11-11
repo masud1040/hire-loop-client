@@ -21,3 +21,18 @@ const getJobs = async (queryString = ''): Promise<Job[]> => {
 };
 
 export { getJobs };
+
+export const getJobsById = async (id: string): Promise<Job> => {
+  const response = await fetch(`${baseUrl}/jobs/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch job');
+  }
+
+  return response.json();
+};

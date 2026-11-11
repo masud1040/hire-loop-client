@@ -6,45 +6,55 @@ import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/app/images/logo.png';
 import { authClient } from '@/lib/auth-client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 export default function SignInPage() {
-        const router = useRouter();
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <SignInForm />
+        </Suspense>
+    );
+}
+
+function SignInForm() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
     
-const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    const formData = new FormData(e.currentTarget);
-    const user = Object.fromEntries(formData.entries()) as {
-      email: string;
-      password: string;
+    const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.currentTarget);
+        const user = Object.fromEntries(formData.entries()) as {
+          email: string;
+          password: string;
+        };
+
+        console.log("Attempting Sign In with:", user.email);
+
+        try {
+          const { data, error } = await authClient.signIn.email({
+            email: user.email,
+            password: user.password,
+          });
+
+          if (error) {
+            console.error("লগইন এরর:", error.message);
+            return;
+          }
+
+         if (data) {
+          console.log("সাইন ইন সফল!", data);
+          
+          // ফিক্স: "/" এর বদলে callbackUrl বসানো হয়েছে
+          window.location.href = callbackUrl; 
+        }
+        } catch (err) {
+          console.error("System Error during Sign In:", err);
+        }
     };
-
-    console.log("Attempting Sign In with:", user.email);
-
-    try {
-      const { data, error } = await authClient.signIn.email({
-        email: user.email,
-        password: user.password,
-      });
-
-      if (error) {
-        console.error("লগইন এরর:", error.message);
-       
-        return;
-      }
-
-     if (data) {
-      console.log("সাইন ইন সফল!", data);
-      
-      // router.push("/") ebong router.refresh() er bodole nicher line ta use koro:
-      window.location.href = "/"; 
-    }
-    } catch (err) {
-      console.error("System Error during Sign In:", err);
-    }
-  };
-
+    
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col justify-center items-center p-4">
       {/* Optional Top Logo */}

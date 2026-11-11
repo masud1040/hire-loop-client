@@ -30,3 +30,6 @@ export const deleteJob = async (jobId: string): Promise<string> => {
   // ফিক্স: json() এর পরিবর্তে text() দেওয়া হলো
   return response.text(); 
 };
+
+
+

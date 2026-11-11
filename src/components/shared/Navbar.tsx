@@ -12,7 +12,7 @@ import logo from '@/app/images/logo.png';
 import { useSession, authClient } from '@/lib/auth-client';
 
 const NAV_ITEMS = [
-  { label: 'Browse Jobs', href: '/jobs' },
+  { label: 'Browse Jobs', href: '/browse-jobs' },
   { label: 'Company', href: '/company' },
   { label: 'Pricing', href: '/pricing' },
 ];
