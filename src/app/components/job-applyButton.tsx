@@ -6,44 +6,63 @@ import { Bookmark } from 'lucide-react';
 import { useRouter } from 'next/navigation'; 
 import { email } from 'better-auth';
 import applyToJob from '@/lib/actions/application';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 const JobApplyButton = ({job}) => {
   const router = useRouter();
   const { data } = useSession();
   const user = data?.user;
 
-  const handleApply = async () => {
-    // যদি ইউজার লগ-ইন করা না থাকে, তাহলে সাইন-ইন পেজে পাঠাবে
+const handleApply = async () => {
+    // ১. লগ-ইন চেক
     if (!user) {
-      // ফিক্স: redirectTo এর জায়গায় callbackUrl দেওয়া হলো
-      router.push(`/sign-in?callbackUrl=/browse-jobs/${job._id}`);
+      router.push(`/sign-in?callbackUrl=/browse-jobs/${job._id || job.id}`);
       return; 
     }
-   // (user as any).role ব্যবহার করা হলো
-else if ((user as any).role === "seeker") {
 
-        const application= {
-            jobId: job._id,
-            userId: user.id,
-            email: user.email
+    const userRole = (user as any).role;
 
-        }
-        const result= await applyToJob(application)
-        if(result.insertedId){
-            console.log("application submited");
-            router.push("/browse-jobs")
+    // ২. রোল চেক (ইউজার Seeker কি না)
+    if (userRole === "seeker") {
+        try {
+            // ৩. ইউজারের সব অ্যাপ্লিকেশন ডেটা নিয়ে আসুন
+            const res = await fetch(`${baseUrl}/applications/${user.id}`);
+            const applications = await res.json();
+
+            // অ্যারের length চেক করেই আমরা টোটাল অ্যাপ্লাই পেয়ে যাচ্ছি! 
+            const totalApplied = applications.length; 
+            console.log("Total Applied Jobs:", totalApplied);
+
+            // ৪. যদি ৫টা বা তার বেশি অ্যাপ্লাই করে ফেলে, তাহলে পেমেন্ট পেজে পাঠিয়ে দিন
+            if (totalApplied >= 5) {
+                console.log("Limit reached! Redirecting to payment page...");
+                alert("You have reached your free limit of 5 applications. Please upgrade your plan."); 
+                router.push("/payment");
+                return; // কোড এখানেই থেমে যাবে, আর ডেটাবেসে সেভ হবে না
+            }
+
+            // ৫. যদি ৫টার কম হয়, তাহলে ডেটাবেসে সেভ হবে
+            const newApplication = {
+                jobId: job._id || job.id,
+                userId: user.id,
+                email: user.email
+            };
             
+            const result = await applyToJob(newApplication);
+
+            if(result && (result.insertedId || result.acknowledged)) {
+                console.log("Application successfully submitted!");
+                router.push("/browse-jobs");
+            }
+
+        } catch (error) {
+            console.error("API Call Error:", error);
         }
-
+    } 
+    else {
+        alert("Only job seekers can apply for this job.");
     }
-    else{
-        console.log("USER not a job seeker");
-        
-    }
-
-
-  };
-
+};
   return (
     <div className="flex items-center gap-3 w-full md:w-auto">
       <button className="p-3.5 bg-[#1a1a1a] border border-white/[0.08] hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">

@@ -36,3 +36,17 @@ export const getJobsById = async (id: string): Promise<Job> => {
 
   return response.json();
 };
+
+// src/lib/api/jobs.ts
+
+
+export const getUserApplications = async (userId: string) => {
+  try {
+    const res = await fetch(`${baseUrl}/applications/${userId}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch applications");
+    return await res.json();
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
