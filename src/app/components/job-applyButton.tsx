@@ -6,6 +6,8 @@ import { Bookmark } from 'lucide-react';
 import { useRouter } from 'next/navigation'; 
 import { email } from 'better-auth';
 import applyToJob from '@/lib/actions/application';
+import { getSession } from '@/lib/api/core/server';
+import { getPremiumUser } from '@/lib/api/user';
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 const JobApplyButton = ({job}) => {
@@ -14,7 +16,9 @@ const JobApplyButton = ({job}) => {
   const user = data?.user;
 
 const handleApply = async () => {
-    // ১. লগ-ইন চেক
+
+  const UserSession = await getSession()
+
     if (!user) {
       router.push(`/sign-in?callbackUrl=/browse-jobs/${job._id || job.id}`);
       return; 
@@ -33,8 +37,12 @@ const handleApply = async () => {
             const totalApplied = applications.length; 
             console.log("Total Applied Jobs:", totalApplied);
 
+            const premiumRes= await getPremiumUser(user.id)
+            console.log('premium',premiumRes);
+            
+
             // ৪. যদি ৫টা বা তার বেশি অ্যাপ্লাই করে ফেলে, তাহলে পেমেন্ট পেজে পাঠিয়ে দিন
-            if (totalApplied >= 5) {
+            if ( !premiumRes.premium &&totalApplied >= 5) {
                 console.log("Limit reached! Redirecting to payment page...");
                 alert("You have reached your free limit of 5 applications. Please upgrade your plan."); 
                 router.push("/payment");
