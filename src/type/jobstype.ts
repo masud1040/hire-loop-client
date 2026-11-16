@@ -54,4 +54,7 @@ export interface JobCreatePayload {
   requirements: string;
   createdAt: string;
   status: JobStatus;
+  recruiterId?: string | undefined;
+  recruiterEmail?: string | null | undefined;
+  
 }

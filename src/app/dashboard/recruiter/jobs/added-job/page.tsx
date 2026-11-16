@@ -16,6 +16,9 @@ import { createJob } from "@/lib/actions/jobs";
 import type { JobCreatePayload, JobStatus, JobType, SalaryFrequency } from "@/type/jobstype";
 import { useRouter } from "next/navigation";
 
+// ১. Better Auth থেকে useSession ইমপোর্ট করুন (আপনার পাথের সাথে মিলিয়ে নিন)
+import { useSession } from "@/lib/auth-client"; 
+
 const JOB_TYPES: { label: string; value: JobType }[] = [
   { label: "Full-time", value: "full-time" },
   { label: "Part-time", value: "part-time" },
@@ -29,6 +32,10 @@ export default function AddJobPage() {
   const [jobStatus, setJobStatus] = useState<JobStatus>("Active");
 
   const router = useRouter();
+
+  // ২. সেশন থেকে ইউজার ডেটা বের করে আনুন
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,6 +58,9 @@ export default function AddJobPage() {
       requirements: formValues.requirements,
       createdAt: new Date().toISOString(),
       status: jobStatus,
+
+      recruiterId: user?.id, 
+      recruiterEmail: user?.email,
     };
 
     console.log("🚀 Published Job Data:", jobData);
@@ -61,7 +71,6 @@ export default function AddJobPage() {
       router.push("/dashboard/recruiter/jobs/manage-jobs");
     } catch (error) {
       console.error("Error creating job:", error);
-      // TODO: Add error toast notification here
     }
   };
 
